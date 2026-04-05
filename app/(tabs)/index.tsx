@@ -1,7 +1,15 @@
+import ListHeading from "@/components/ListHeading";
+import SubscriptionCard from "@/components/SubscriptionCard";
+import UpcomingSubscriptionsCard from "@/components/UpcomingSubscriptionsCard";
+import { HOME_BALANCE, HOME_SUBSCRIPTIONS, HOME_USER, UPCOMING_SUBSCRIPTIONS } from "@/constants/data";
+import { icons } from "@/constants/icons";
+import images from "@/constants/images";
 import "@/global.css";
-import { Link } from "expo-router";
+import { formatCurrency } from "@/lib/utils";
+import dayjs from "dayjs";
 import { styled } from "nativewind";
-import { Text } from "react-native";
+import { useState } from "react";
+import { FlatList, Image, Text, View } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
 const SafeAreaView = styled(RNSafeAreaView);
@@ -9,16 +17,65 @@ const SafeAreaView = styled(RNSafeAreaView);
 
 
 export default function App() {
+
+  const [expandedSubscription, setExpandedSubscription] = useState<String | null>(null);
   return (
     <SafeAreaView className="flex-1 bg-background p-5">
-      <Text className="font-sans-extrabold text-primary text-5xl ">
-        Home
-      </Text>
-      <Link href="/onboarding" className="mt-4 font-sans-medium  bg-primary text-white p-4">Go to Onboarding</Link>
+     
+
+        <FlatList 
+        ListHeaderComponent={() => (
+          <>
+           <View className="home-header">
+          <View className="home-user">
+            <Image source={images.avatar} className="home-avatar" />
+            <Text className="home-user-name">
+              {HOME_USER.name}
+            </Text>
+          </View>
+          <Image source={icons.add} className="home-add-icon" />
+      </View>
+
+      <View className="home-balance-card">
+        <Text className="home-balance-label">Balance</Text>
+        <View className="home-balance-row">
+          <Text className="home-balance-amount">
+            {formatCurrency(HOME_BALANCE.amount)}
+          </Text>
+          <Text className="home-balance-date">
+            {dayjs(HOME_BALANCE.nextRenewalDate).format("MM/DD")}
+          </Text>
+        </View>
+      </View>
     
-      <Link href="/(auth)/sign-in" className="mt-4 font-sans-medium bg-primary text-white p-4">Go to Sign In</Link>
-      <Link href="/(auth)/sign-up" className="mt-4 font-sans-medium bg-primary text-white p-4">Go to Sign Up</Link>
-    
+      <View className="mb-5">
+        <ListHeading title="Upcoming Subscriptions" />
+        <FlatList 
+        data={UPCOMING_SUBSCRIPTIONS} 
+        renderItem={({item}) => <UpcomingSubscriptionsCard {...item} />} 
+        keyExtractor={(item) => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ListEmptyComponent={<Text className="home-empty-text">No upcoming subscriptions</Text>}
+        />
+      </View>
+
+      <ListHeading title="All Subscriptions" />
+
+          </>
+        )}
+        data={HOME_SUBSCRIPTIONS} 
+        keyExtractor={(item) => item.id}
+        renderItem={({item}) => <SubscriptionCard {...item} 
+          expanded={expandedSubscription === item.id} 
+          onPress={() => setExpandedSubscription((currentId) => currentId === item.id ? null : item.id)} 
+          />}       
+        extraData={expandedSubscription}
+        ItemSeparatorComponent={() => <View className="h-4" />}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<Text className="home-empty-text">No subscriptions</Text>}
+        contentContainerClassName="pb-20"
+        />
     </SafeAreaView>
   );
 }
