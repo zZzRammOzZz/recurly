@@ -1,8 +1,41 @@
 import { formatCurrency, formatSubscriptionDateTime } from "@/lib/utils";
 import clsx from "clsx";
-import { Image, Pressable, Text, View } from "react-native";
+import React from "react";
+import { Image, Pressable, Text, View, type ImageSourcePropType } from "react-native";
 
-const SubscriptionCard = ({name,price,currency,billing,renewalDate,color,icon,category,plan,onPress, expanded, paymentMethod, startDate, status}: SubscriptionCardProps) => {
+interface SubscriptionCardProps {
+    name: string;
+    price: number;
+    currency?: string;
+    billing: string;
+    renewalDate?: string;
+    color?: string;
+    icon: ImageSourcePropType;
+    category?: string;
+    plan?: string;
+    onPress: () => void;
+    expanded: boolean;
+    paymentMethod?: string;
+    startDate?: string;
+    status?: string;
+}
+
+const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
+    name,
+    price,
+    currency,
+    billing,
+    renewalDate,
+    color,
+    icon,
+    category,
+    plan,
+    onPress,
+    expanded,
+    paymentMethod,
+    startDate,
+    status,
+}) => {
     return (
         <Pressable onPress={onPress} className={clsx("sub-card bg-card",expanded ? "sub-card-expanded" : "bg-card" )} style={!expanded && color ? { backgroundColor: color } : {}}>
             <View className="sub-head">
