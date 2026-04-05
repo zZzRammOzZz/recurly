@@ -16,6 +16,12 @@ if (!publishableKey) {
   throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file");
 }
 
+const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? "";
+
+if (!posthogApiKey) {
+  throw new Error("Missing EXPO_PUBLIC_POSTHOG_API_KEY");
+}
+
 function RootLayoutContent() {
   const [fontsLoaded] = useFonts({
     "sans-bold": require("@/assets/fonts/PlusJakartaSans-Bold.ttf"),
@@ -50,7 +56,7 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <PostHogProvider
-      apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? ""}
+      apiKey={posthogApiKey}
       options={{ host: process.env.EXPO_PUBLIC_POSTHOG_HOST }}
     >
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
