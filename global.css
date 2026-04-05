@@ -247,7 +247,7 @@
     }
 
     .auth-logo-wrap {
-        @apply mb-7 flex-row items-center gap-3;
+        @apply mb-7 w-full flex-row items-center justify-center gap-3;
     }
 
     .auth-logo-mark {
@@ -307,7 +307,7 @@
     }
 
     .auth-button {
-        @apply mt-1 items-center rounded-2xl bg-accent py-4;
+        @apply mt-1 flex-row items-center justify-center gap-2 rounded-2xl bg-accent py-4;
     }
 
     .auth-button-disabled {
@@ -315,7 +315,35 @@
     }
 
     .auth-button-text {
-        @apply text-base font-sans-bold text-primary;
+        @apply text-base font-sans-bold text-white;
+    }
+
+    .auth-form-message {
+        @apply rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3;
+    }
+
+    .auth-form-message-text {
+        @apply text-sm font-sans-medium text-destructive;
+    }
+
+    .auth-password-row {
+        @apply flex-row items-center rounded-2xl border border-border bg-background pl-4 pr-1;
+    }
+
+    .auth-password-row-error {
+        @apply border-destructive;
+    }
+
+    .auth-password-input {
+        @apply min-h-[52px] flex-1 py-4 pr-2 text-base font-sans-medium text-primary;
+    }
+
+    .auth-password-toggle {
+        @apply rounded-xl px-3 py-3 active:opacity-70;
+    }
+
+    .auth-link-row-wrap {
+        @apply mt-5 flex-row flex-wrap items-center justify-center gap-x-1 gap-y-1;
     }
 
     .auth-secondary-button {
@@ -339,7 +367,7 @@
     }
 
     .auth-link-row {
-        @apply mt-5 flex-row items-center justify-center gap-1;
+        @apply flex-row flex-wrap items-center justify-center gap-x-1 gap-y-1;
     }
 
     .auth-link-copy {
