@@ -2,12 +2,14 @@ import { AuthShell } from "@/components/AuthShell";
 import { brand } from "@/constants/branding";
 import { colors } from "@/constants/theme";
 import { getClerkErrorMessage } from "@/lib/auth-errors";
+import { navigateAfterAuth } from "@/lib/auth-navigation";
+import { resolvePostAuthHref, returnToQuerySuffix } from "@/lib/auth-return-to";
 import { validateEmail, validatePasswordRequired, validateVerificationCode } from "@/lib/auth-validation";
 import { useSignIn } from "@clerk/expo";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import clsx from "clsx";
-import { type Href, Link, useRouter } from "expo-router";
-import React from "react";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,21 +18,16 @@ import {
   View,
 } from "react-native";
 
-function navigateAfterAuth(
-  decorateUrl: (url: string) => string,
-  router: { replace: (href: Href) => void },
-) {
-  const url = decorateUrl("/(tabs)");
-  if (url.startsWith("http")) {
-    window.location.href = url;
-  } else {
-    router.replace(url as Href);
-  }
-}
-
 export default function SignInPage() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
+  const { returnTo: returnToParam } = useLocalSearchParams<{
+    returnTo?: string | string[];
+  }>();
+  const postAuthPath = useMemo(
+    () => resolvePostAuthHref(returnToParam, "/(tabs)"),
+    [returnToParam],
+  );
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -40,6 +37,9 @@ export default function SignInPage() {
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [passwordError, setPasswordError] = React.useState<string | null>(null);
   const [codeError, setCodeError] = React.useState<string | null>(null);
+  const [totpCode, setTotpCode] = React.useState("");
+  const [totpCodeError, setTotpCodeError] = React.useState<string | null>(null);
+  const [totpBusy, setTotpBusy] = React.useState(false);
   const [formMessage, setFormMessage] = React.useState<string | null>(null);
 
   const busy = fetchStatus === "fetching";
@@ -60,6 +60,51 @@ export default function SignInPage() {
     setCode(v.replace(/\D/g, "").slice(0, 8));
     setCodeError(null);
     setFormMessage(null);
+  };
+
+  const onChangeTotpCode = (v: string) => {
+    setTotpCode(v.replace(/\D/g, "").slice(0, 8));
+    setTotpCodeError(null);
+    setFormMessage(null);
+  };
+
+  const handleTotpVerify = async () => {
+    const cErr = validateVerificationCode(totpCode);
+    setTotpCodeError(cErr);
+    if (cErr) return;
+
+    setTotpBusy(true);
+    setFormMessage(null);
+
+    try {
+      const { error } = await signIn.mfa.verifyTOTP({
+        code: totpCode.replace(/\D/g, ""),
+      });
+
+      if (error) {
+        setTotpCodeError(getClerkErrorMessage(error));
+        return;
+      }
+
+      if (signIn.status === "complete") {
+        const { error: finalizeError } = await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              setFormMessage("Complete the remaining step in your account to continue.");
+              return;
+            }
+            navigateAfterAuth(decorateUrl, router, postAuthPath);
+          },
+        });
+        if (finalizeError) {
+          setFormMessage(getClerkErrorMessage(finalizeError));
+        }
+      } else {
+        setTotpCodeError("That code did not work. Check your authenticator and try again.");
+      }
+    } finally {
+      setTotpBusy(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -88,7 +133,7 @@ export default function SignInPage() {
             setFormMessage("Complete the remaining step in your account to continue.");
             return;
           }
-          navigateAfterAuth(decorateUrl, router);
+          navigateAfterAuth(decorateUrl, router, postAuthPath);
         },
       });
     } else if (signIn.status === "needs_second_factor") {
@@ -131,7 +176,7 @@ export default function SignInPage() {
             setFormMessage("Complete the remaining step in your account to continue.");
             return;
           }
-          navigateAfterAuth(decorateUrl, router);
+          navigateAfterAuth(decorateUrl, router, postAuthPath);
         },
       });
     } else {
@@ -140,10 +185,13 @@ export default function SignInPage() {
   };
 
   if (signIn.status === "needs_second_factor") {
+    const totpFactor = signIn.supportedSecondFactors?.find((f) => f.strategy === "totp");
+    const secondFactorBusy = totpBusy || busy;
+
     return (
       <AuthShell
         title="Extra verification"
-        subtitle="This account uses two-factor authentication. Use your authenticator app to finish signing in."
+        subtitle="Enter the 6-digit code from your authenticator app to finish signing in."
         showBrand
       >
         <View className="auth-card">
@@ -153,14 +201,65 @@ export default function SignInPage() {
                 <Text className="auth-form-message-text">{formMessage}</Text>
               </View>
             ) : null}
+
+            {totpFactor ? (
+              <>
+                <View className="auth-field">
+                  <Text className="auth-label">Authenticator code</Text>
+                  <TextInput
+                    className={clsx(
+                      "auth-input",
+                      (totpCodeError || errors.fields?.code) && "auth-input-error",
+                    )}
+                    value={totpCode}
+                    placeholder="6-digit code"
+                    placeholderTextColor={colors.mutedForeground}
+                    onChangeText={onChangeTotpCode}
+                    keyboardType="number-pad"
+                    textContentType="oneTimeCode"
+                    autoComplete="one-time-code"
+                    maxLength={8}
+                  />
+                  {(totpCodeError || errors.fields?.code) && (
+                    <Text className="auth-error">
+                      {totpCodeError ?? errors.fields?.code?.message}
+                    </Text>
+                  )}
+                </View>
+
+                <Pressable
+                  className={clsx(
+                    "auth-button w-full",
+                    secondFactorBusy && "auth-button-disabled",
+                  )}
+                  disabled={secondFactorBusy}
+                  onPress={() => void handleTotpVerify()}
+                >
+                  {secondFactorBusy ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text className="auth-button-text">Verify and continue</Text>
+                  )}
+                </Pressable>
+              </>
+            ) : (
+              <Text className="auth-helper text-center">
+                This sign-in needs a second factor your app does not support yet. Use a different
+                account or contact support.
+              </Text>
+            )}
+
             <Text className="auth-helper text-center">
               If you lost access to your second factor, recover your account from the email you used
               to sign up, or contact support for your organization.
             </Text>
             <Pressable
               className="auth-secondary-button w-full"
+              disabled={secondFactorBusy}
               onPress={() => {
                 void signIn.reset();
+                setTotpCode("");
+                setTotpCodeError(null);
                 setFormMessage(null);
               }}
             >
@@ -341,7 +440,7 @@ export default function SignInPage() {
 
           <View className="auth-link-row-wrap">
             <Text className="auth-link-copy">New to {brand.name}? </Text>
-            <Link href="/sign-up" asChild>
+            <Link href={`/sign-up${returnToQuerySuffix(returnToParam)}`} asChild>
               <Pressable hitSlop={8}>
                 <Text className="auth-link">Create an account</Text>
               </Pressable>

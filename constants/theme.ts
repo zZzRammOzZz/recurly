@@ -44,6 +44,9 @@ export const components = {
     },
 } as const;
 
+/** Floating tab bar height — keep in sync with `app/(tabs)/_layout.tsx` (`tabBarStyle.height`). */
+export const TAB_BAR_HEIGHT = components.tabBar.height;
+
 export const theme = {
     colors,
     spacing,

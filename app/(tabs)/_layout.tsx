@@ -1,5 +1,6 @@
 import { tabs } from "@/constants/data";
-import { colors, components } from "@/constants/theme";
+import { colors, components, TAB_BAR_HEIGHT } from "@/constants/theme";
+import { signInHrefWithReturnTo, useAuthRedirectReturnTo } from "@/lib/auth-return-to";
 import { useAuth } from "@clerk/expo";
 import clsx from "clsx";
 import { Redirect, Tabs } from "expo-router";
@@ -21,13 +22,14 @@ function TabIcon({ focused, icon }: TabIconProps) {
 const TabLayout = () => {
     const { isSignedIn, isLoaded } = useAuth();
     const insets = useSafeAreaInsets();
+    const returnTo = useAuthRedirectReturnTo();
 
     if (!isLoaded) {
         return null;
     }
 
     if (!isSignedIn) {
-        return <Redirect href="/sign-in" />;
+        return <Redirect href={signInHrefWithReturnTo(returnTo)} />;
     }
 
      return (
@@ -37,7 +39,7 @@ const TabLayout = () => {
             tabBarStyle: {
                 position: 'absolute',
                 bottom:Math.max(insets.bottom, tabBar.horizontalInset),
-                height: tabBar.height,
+                height: TAB_BAR_HEIGHT,
                 marginHorizontal: tabBar.horizontalInset,
                 borderRadius: tabBar.radius,
                 backgroundColor: colors.primary,
@@ -45,7 +47,7 @@ const TabLayout = () => {
                 elevation: 0,
         },
         tabBarItemStyle: {
-            paddingVertical: tabBar.height/2 - tabBar.iconFrame/1.6,
+            paddingVertical: TAB_BAR_HEIGHT / 2 - tabBar.iconFrame / 1.6,
         },
         tabBarIconStyle: {
             width: tabBar.iconFrame,

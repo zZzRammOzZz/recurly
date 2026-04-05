@@ -1,9 +1,11 @@
 import "@/global.css";
-import { ClerkProvider } from "@clerk/expo";
+import { colors } from "@/constants/theme";
+import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -13,7 +15,7 @@ if (!publishableKey) {
   throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file");
 }
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const [fontsLoaded] = useFonts({
     "sans-bold": require("@/assets/fonts/PlusJakartaSans-Bold.ttf"),
     "sans-extrabold": require("@/assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
@@ -23,19 +25,31 @@ export default function RootLayout() {
     "sans-light": require("@/assets/fonts/PlusJakartaSans-Light.ttf"),
   });
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+  const { isLoaded: clerkLoaded } = useAuth();
 
-  if (!fontsLoaded) {
-    return null;
+  const appReady = fontsLoaded && clerkLoaded;
+
+  useEffect(() => {
+    if (appReady) {
+      void SplashScreen.hideAsync();
+    }
+  }, [appReady]);
+
+  if (!appReady) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <RootLayoutContent />
     </ClerkProvider>
   );
 }

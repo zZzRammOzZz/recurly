@@ -1,5 +1,6 @@
 import images from "@/constants/images";
-import { colors } from "@/constants/theme";
+import { colors, components, TAB_BAR_HEIGHT } from "@/constants/theme";
+import { getClerkErrorMessage } from "@/lib/auth-errors";
 import { accountDisplayName, primaryEmail } from "@/lib/user-display";
 import { useClerk, useUser } from "@clerk/expo";
 import dayjs from "dayjs";
@@ -7,17 +8,23 @@ import { styled } from "nativewind";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView as RNSafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 const Settings = () => {
+  const insets = useSafeAreaInsets();
+  const { tabBar } = components;
+  const scrollBottomPadding =
+    Math.max(insets.bottom, tabBar.horizontalInset) + TAB_BAR_HEIGHT;
+
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const [signingOut, setSigningOut] = useState(false);
@@ -41,6 +48,8 @@ const Settings = () => {
     setSigningOut(true);
     try {
       await signOut();
+    } catch (error) {
+      Alert.alert("Couldn't sign out", getClerkErrorMessage(error));
     } finally {
       setSigningOut(false);
     }
@@ -50,7 +59,8 @@ const Settings = () => {
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
       <ScrollView
         className="flex-1"
-        contentContainerClassName="p-5 pb-10"
+        contentContainerClassName="p-5"
+        contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

@@ -2,6 +2,8 @@ import { AuthShell } from "@/components/AuthShell";
 import { brand } from "@/constants/branding";
 import { colors } from "@/constants/theme";
 import { getClerkErrorMessage } from "@/lib/auth-errors";
+import { navigateAfterAuth } from "@/lib/auth-navigation";
+import { resolvePostAuthHref, returnToQuerySuffix } from "@/lib/auth-return-to";
 import {
   validateEmail,
   validatePasswordForSignUp,
@@ -10,8 +12,8 @@ import {
 import { useAuth, useSignUp } from "@clerk/expo";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import clsx from "clsx";
-import { type Href, Link, useRouter } from "expo-router";
-import React from "react";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -20,22 +22,17 @@ import {
   View,
 } from "react-native";
 
-function navigateAfterAuth(
-  decorateUrl: (url: string) => string,
-  router: { replace: (href: Href) => void },
-) {
-  const url = decorateUrl("/(tabs)");
-  if (url.startsWith("http")) {
-    window.location.href = url;
-  } else {
-    router.replace(url as Href);
-  }
-}
-
 export default function SignUpPage() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
   const router = useRouter();
+  const { returnTo: returnToParam } = useLocalSearchParams<{
+    returnTo?: string | string[];
+  }>();
+  const postAuthPath = useMemo(
+    () => resolvePostAuthHref(returnToParam, "/(tabs)"),
+    [returnToParam],
+  );
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -158,7 +155,7 @@ export default function SignUpPage() {
             setFormMessage("Complete the remaining step in your account to continue.");
             return;
           }
-          navigateAfterAuth(decorateUrl, router);
+          navigateAfterAuth(decorateUrl, router, postAuthPath);
         },
       });
     } else {
@@ -331,7 +328,7 @@ export default function SignUpPage() {
 
           <View className="auth-link-row-wrap">
             <Text className="auth-link-copy">Already on {brand.name}? </Text>
-            <Link href="/sign-in" asChild>
+            <Link href={`/sign-in${returnToQuerySuffix(returnToParam)}`} asChild>
               <Pressable hitSlop={8}>
                 <Text className="auth-link">Sign in</Text>
               </Pressable>
