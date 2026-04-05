@@ -29,13 +29,6 @@ declare global {
         color?: string;
     }
 
-    interface SubscriptionCardProps extends Omit<Subscription, "id"> {
-        expanded: boolean;
-        onPress: () => void;
-        onCancelPress?: () => void;
-        isCancelling?: boolean;
-    }
-
     interface UpcomingSubscription {
         id: string;
         icon: ImageSourcePropType;
@@ -50,6 +43,7 @@ declare global {
 
     interface ListHeadingProps {
         title: string;
+        onViewAll?: () => void;
     }
 }
 
