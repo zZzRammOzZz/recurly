@@ -1,4 +1,5 @@
 import { tabs } from "@/constants/data";
+import { SubscriptionsProvider } from "@/contexts/SubscriptionsContext";
 import { colors, components, TAB_BAR_HEIGHT } from "@/constants/theme";
 import { signInHrefWithReturnTo, useAuthRedirectReturnTo } from "@/lib/auth-return-to";
 import { useAuth } from "@clerk/expo";
@@ -33,8 +34,10 @@ const TabLayout = () => {
     }
 
      return (
+        <SubscriptionsProvider>
         <Tabs screenOptions={{ 
             headerShown: false,
+            tabBarHideOnKeyboard: true,
             tabBarShowLabel: false,
             tabBarStyle: {
                 position: 'absolute',
@@ -68,6 +71,7 @@ const TabLayout = () => {
         />
       ))}
     </Tabs>
+        </SubscriptionsProvider>
   );
 };
 
