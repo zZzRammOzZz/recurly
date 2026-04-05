@@ -1,7 +1,8 @@
+import SubscriptionIcon from "@/components/SubscriptionIcon";
 import { formatCurrency, formatSubscriptionDateTime } from "@/lib/utils";
 import clsx from "clsx";
 import React from "react";
-import { Image, Pressable, Text, View, type ImageSourcePropType } from "react-native";
+import { Pressable, Text, View, type ImageSourcePropType } from "react-native";
 
 interface SubscriptionCardProps {
     name: string;
@@ -40,7 +41,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <Pressable onPress={onPress} className={clsx("sub-card bg-card",expanded ? "sub-card-expanded" : "bg-card" )} style={!expanded && color ? { backgroundColor: color } : {}}>
             <View className="sub-head">
                 <View className="sub-main">
-                    <Image source={icon} className="sub-icon" />
+                    <SubscriptionIcon name={name} fallbackSource={icon} size={64} className="sub-icon" />
                     <View className="sub-copy">
                         <Text className="sub-title" numberOfLines={1}>{name}</Text>  
                         <Text className="sub-meta" numberOfLines={1} ellipsizeMode="tail">{category?.trim() || plan?.trim() ||(renewalDate ? formatSubscriptionDateTime(renewalDate) : "")}</Text>

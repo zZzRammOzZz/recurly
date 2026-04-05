@@ -1,11 +1,12 @@
+import SubscriptionIcon from "@/components/SubscriptionIcon";
 import { formatCurrency } from "@/lib/utils";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 const UpcomingSubscriptionsCard = ({icon, name, price, currency, daysLeft}: UpcomingSubscription) => {
     return (
         <View className="upcoming-card">
             <View className="upcoming-row">
-                <Image source={icon} className="upcoming-icon" />
+                <SubscriptionIcon name={name} fallbackSource={icon} size={56} className="upcoming-icon" />
                 <View>
                     <Text className="upcoming-price">{formatCurrency(price, currency)}</Text>
                     <Text className="upcoming-meta" numberOfLines={1}>
